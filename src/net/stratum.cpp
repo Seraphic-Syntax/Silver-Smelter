@@ -14,7 +14,30 @@ StratumClient::StratumClient(asio::io_context& ioc, const std::string& host, con
       m_port(port),
       m_user(user),
       m_read_buffer(4096) // Allocate a 4KB read buffer
-{}
+{// In file: src/net/stratum.cpp
+    Log::info("StratumClient created for " + m_host + ":" + m_port + " as user " + m_user);
+}
+
+void StratumClient::on_resolve(const boost::system::error_code& ec, tcp::resolver::results_type endpoints) {
+    if (ec) {
+        Log::error("Resolve failed: " + ec.message());
+        return;
+    }
+    Log::info("Connecting to endpoint...");
+    // Step 2: Attempt to connect to the first resolved endpoint.
+    asio::async_connect(m_socket, endpoints,
+        [this](const boost::system::error_code& ec, const tcp::endpoint& /*endpoint*/) { // <-- also add /*endpoint*/ to fix unused parameter warning
+            on_connect(ec);
+        });
+}
+
+void StratumClient::on_connect(const boost::system::error_code& ec) {
+    if (ec) {
+        Log::error("Connect failed: " + ec.message());
+        // TODO: Implement reconnect logic here.
+        return;
+    }
+    Log::success("Connection established!");
 
 void StratumClient::on_new_job(JobCallback callback) {
     m_job_callback = std::move(callback);
@@ -133,4 +156,23 @@ void StratumClient::stop() {
     } else {
         Log::warn("Stratum client was already stopped.");
     }
+// In file: src/net/stratum.cpp
+
+// ... all the other functions ...
+
+void StratumClient::submit_share(const std::string& job_id, uint32_t nonce) {
+    Log::success("Submitting share for job " + job_id + " with nonce " + std::to_string(nonce));
+    // TODO: This should be a real Stratum V2 binary message.
+    std::string submit_msg = "{\"id\": 4, \"method\": \"mining.submit\", \"params\": [\"" + m_user + "\", \"" + job_id + "\", \"00000000\", \"00000000\", \"" + std::to_string(nonce) + "\"]}\\n";
+    do_write(submit_msg);
+}
+
+void StratumClient::stop() {
+    boost::system::error_code ec; // To ignore errors on close
+    if (m_socket.is_open()) {
+        m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        m_socket.close(ec);
+    }
+}
+    Log::info("Stratum client stopped.");
 }

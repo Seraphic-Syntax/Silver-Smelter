@@ -1,3 +1,5 @@
+// Replace the contents of this file: include/silver_smelter/miner/worker.hpp
+
 #pragma once
 
 #include "silver_smelter/net/stratum.hpp"
@@ -9,7 +11,8 @@
 
 class Miner {
 public:
-    Miner(int num_threads);
+    // This constructor must match the one in worker.cpp
+    Miner(std::unique_ptr<StratumClient> client, int num_threads = 0);
     ~Miner();
 
     void start();
@@ -21,14 +24,15 @@ public:
 private:
     void run_worker(int thread_id);
 
+    // This member was missing from the old header file
+    std::unique_ptr<StratumClient> m_client;
+    
     int m_num_threads;
     std::vector<std::thread> m_threads;
     
-    // This atomic flag tells workers to stop and get new work.
     std::atomic<bool> m_new_job_available;
     std::atomic<bool> m_is_running;
 
-    // The current job is shared between threads, so it needs a mutex.
     std::shared_ptr<StratumJob> m_current_job;
     std::mutex m_job_mutex;
 };
