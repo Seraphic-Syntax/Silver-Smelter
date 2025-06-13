@@ -1,9 +1,9 @@
 #include "silver_smelter/miner/worker.hpp"
 #include "silver_smelter/util/log.hpp"
 #include <iostream>
-#include <ctime> // Required for time()
+#include <ctime>
 
-// The Miner constructor now takes ownership of the StratumClient.
+// The Miner constructor takes ownership of the StratumClient.
 // The default argument for num_threads is only in the .hpp file, not here.
 Miner::Miner(std::unique_ptr<StratumClient> client, int num_threads)
     : m_client(std::move(client)),
@@ -30,8 +30,8 @@ void Miner::start() {
 
     // Set up the callback. The miner's on_new_job method will be called
     // by the client whenever a new job arrives from the network.
-    // We use a lambda to correctly bind the 'this' pointer.
-    m_client->on_new_job([this](StratumJob job) {
+    // We use a lambda to correctly bind the 'this' pointer and the new job type.
+    m_client->on_new_job([this](StratumV2Job job) {
         this->on_new_job(job);
     });
 
@@ -57,11 +57,12 @@ void Miner::stop() {
     Log::info("All miner threads have been stopped.");
 }
 
-void Miner::on_new_job(StratumJob job) {
-    Log::success("New job received by Miner: " + job.job_id);
+// The callback now accepts the StratumV2Job struct.
+void Miner::on_new_job(StratumV2Job job) {
+    Log::success("New V2 job received by Miner: " + std::to_string(job.job_id));
     // Lock the mutex to safely update the shared job pointer.
     std::lock_guard<std::mutex> lock(m_job_mutex);
-    m_current_job = std::make_shared<StratumJob>(job);
+    m_current_job = std::make_shared<StratumV2Job>(job);
     
     // Set the flag to notify all worker threads that new work is ready.
     m_new_job_available = true;
@@ -71,7 +72,7 @@ void Miner::run_worker(int thread_id) {
     Log::info("Worker thread " + std::to_string(thread_id) + " starting.");
     
     while (m_is_running) {
-        std::shared_ptr<StratumJob> local_job;
+        std::shared_ptr<StratumV2Job> local_job;
 
         // Wait for a job to be available.
         {
@@ -96,7 +97,7 @@ void Miner::run_worker(int thread_id) {
         uint32_t start_nonce = thread_id * nonce_range_size;
         uint32_t end_nonce = (thread_id == m_num_threads - 1) ? UINT32_MAX : start_nonce + nonce_range_size;
 
-        Log::info("Thread " + std::to_string(thread_id) + " starting work on job " + local_job->job_id +
+        Log::info("Thread " + std::to_string(thread_id) + " starting work on job " + std::to_string(local_job->job_id) +
                   " with nonce range " + std::to_string(start_nonce) + " - " + std::to_string(end_nonce));
 
         // The main hashing loop.
@@ -115,12 +116,8 @@ void Miner::run_worker(int thread_id) {
 
             if (check_proof_of_work(hash, local_job->target)) {
                 // We found a valid share!
-                // --- FIX APPLIED HERE ---
-                // We provide placeholders for the extra parameters needed by submit_share.
-                std::string extranonce2 = "00000000"; // Placeholder
-                std::string ntime = std::to_string(local_job->header.timestamp); // Use job's timestamp
-
-                m_client->submit_share(local_job->job_id, nonce, extranonce2, ntime);
+                // The V2 submit_share call is much simpler.
+                m_client->submit_share(local_job->job_id, nonce);
             }
         }
     }

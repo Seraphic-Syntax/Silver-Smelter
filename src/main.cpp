@@ -7,11 +7,11 @@
 int main(int argc, char* argv[]) {
     Log::info("Silver-Smelter Bitcoin Miner starting...");
 
-    // --- Configuration ---
-    // In a real app, these would come from command-line arguments (cxxopts).
-    const std::string host = "stratum.braiins.com"; // Using old Stratum V1 for this example
-    const std::string port = "3333";
-    const std::string user = "Seraphic-Syntax.worker1";
+    // --- Pool Configuration ---
+    const std::string host = "v2.us-east.stratum.braiins.com"
+    const std::string port = "3334";
+    const std::string user = "Seraphic-Syntax.Silver-Smelter";
+    const std::string pool_public_key_str = "u95GEReVMjK6k5YqiSFNqqTnKU4ypU2Wm8awa6tmbmDmk1bWt";
     Log::info("Pool: " + host + ":" + port);
     Log::info("User: " + user);
 
