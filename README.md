@@ -90,7 +90,8 @@ Collapse
 [INFO]: Worker thread 0 starting work on job 98765...
 [INFO]: Worker thread 1 starting work on job 98765...
 ...
-архитектура (Architecture)
+
+(Architecture)
 The project is designed with a clear separation of concerns:
 
 src/net/: Handles all network communication using the Stratum V2 protocol.
