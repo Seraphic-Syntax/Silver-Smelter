@@ -9,7 +9,6 @@ Silver-Smelter
 </p>
 
 <p align="center">
-    <a href="https://github.com/Seraphic-Syntax/Silver-Smelter/actions/workflows/cmake.yml"><img src="https://github.com/Seraphic-Syntax/Silver-Smelter/actions/workflows/cmake.yml/badge.svg" alt="CMake Build"></a>
     <a href="https://github.com/Seraphic-Syntax/Silver-Smelter/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
     <img src="https://img.shields.io/badge/C%2B%2B-17-brightgreen.svg" alt="C++17">
     <img src="https://img.shields.io/badge/Stratum-V2-orange.svg" alt="Stratum V2">
