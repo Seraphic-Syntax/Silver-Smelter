@@ -8,10 +8,10 @@ int main(int argc, char* argv[]) {
     Log::info("Silver-Smelter Bitcoin Miner starting...");
 
     // --- Configuration from your Stratum V2 URI ---
-    const std::string host = "v2.us-east.stratum.braiins.com";      // <-- From the URI
-    const std::string port = "3334";                                // Standard port for stratum2+tcp
-    const std::string user = "Seraphic-Syntax.Silver-Smelter";             // Your Braiins Pool username
-    const std::string pool_public_key_str = "u95GEReVMjK6k5YqiSFNqqTnKU4ypU2Wm8awa6tmbmDmk1bWt"; // <-- From the URI
+    const std::string host = "v2.us-east.stratum.braiins.com";  
+    const std::string port = "3334";                            
+    const std::string user = "Seraphic-Syntax.Silver-Smelter";   
+    const std::string pool_public_key_str = "u95GEReVMjK6k5YqiSFNqqTnKU4ypU2Wm8awa6tmbmDmk1bWt"; 
     // ---------------------------------------------------
 
     Log::info("Pool: " + host + ":" + port);
