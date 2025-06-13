@@ -1,10 +1,11 @@
 #include "silver_smelter/miner/worker.hpp"
 #include "silver_smelter/util/log.hpp"
 #include <iostream>
+#include <ctime> // Required for time()
 
-// We need a way for the main function to pass the client to the miner.
-// The miner's constructor will now take ownership of the StratumClient.
-Miner::Miner(std::unique_ptr<StratumClient> client, int num_threads = 0)
+// The Miner constructor now takes ownership of the StratumClient.
+// The default argument for num_threads is only in the .hpp file, not here.
+Miner::Miner(std::unique_ptr<StratumClient> client, int num_threads)
     : m_client(std::move(client)),
       m_is_running(false),
       m_new_job_available(false)
@@ -29,7 +30,7 @@ void Miner::start() {
 
     // Set up the callback. The miner's on_new_job method will be called
     // by the client whenever a new job arrives from the network.
-    // We use a lambda to correctly bind `this` pointer.
+    // We use a lambda to correctly bind the 'this' pointer.
     m_client->on_new_job([this](StratumJob job) {
         this->on_new_job(job);
     });
@@ -93,7 +94,7 @@ void Miner::run_worker(int thread_id) {
         // Define the nonce range for this specific thread.
         uint64_t nonce_range_size = (uint64_t)UINT32_MAX / m_num_threads;
         uint32_t start_nonce = thread_id * nonce_range_size;
-        uint32_t end_nonce = start_nonce + nonce_range_size;
+        uint32_t end_nonce = (thread_id == m_num_threads - 1) ? UINT32_MAX : start_nonce + nonce_range_size;
 
         Log::info("Thread " + std::to_string(thread_id) + " starting work on job " + local_job->job_id +
                   " with nonce range " + std::to_string(start_nonce) + " - " + std::to_string(end_nonce));
@@ -114,7 +115,12 @@ void Miner::run_worker(int thread_id) {
 
             if (check_proof_of_work(hash, local_job->target)) {
                 // We found a valid share!
-                m_client->submit_share(local_job->job_id, nonce);
+                // --- FIX APPLIED HERE ---
+                // We provide placeholders for the extra parameters needed by submit_share.
+                std::string extranonce2 = "00000000"; // Placeholder
+                std::string ntime = std::to_string(local_job->header.timestamp); // Use job's timestamp
+
+                m_client->submit_share(local_job->job_id, nonce, extranonce2, ntime);
             }
         }
     }
