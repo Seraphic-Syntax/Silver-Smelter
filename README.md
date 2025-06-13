@@ -1,4 +1,4 @@
-✨ Silver-Smelter ✨
+Silver-Smelter 
 
 <p align="center">
   <img src="https://i.imgur.com/gKcg4E8.png" alt="Silver-Smelter Logo" width="200"/>
