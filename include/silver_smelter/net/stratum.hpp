@@ -1,7 +1,6 @@
-// Replace content of: include/silver_smelter/net/stratum.hpp
 #pragma once
 
-#include "v2_protocol.hpp" // Our new header for V2 structs
+#include "v2_protocol.hpp" // Our header for V2 structs
 #include "silver_smelter/core/block.hpp"
 #include <functional>
 #include <string>
@@ -20,7 +19,8 @@ class StratumClient {
 public:
     using JobCallback = std::function<void(StratumV2Job)>;
 
-    StratumClient(boost::asio::io_context& ioc, const std::string& host, const std::string& port, const std::string& user);
+    // The constructor is updated to accept the pool's public key string.
+    StratumClient(boost::asio::io_context& ioc, const std::string& host, const std::string& port, const std::string& user, const std::string& pool_pub_key);
 
     void on_new_job(JobCallback callback);
     void connect();
@@ -45,6 +45,7 @@ private:
     // V2 specific actions
     void send_subscribe();
 
+    // --- Member Variables ---
     boost::asio::io_context& m_ioc;
     boost::asio::ip::tcp::socket m_socket;
     boost::asio::ip::tcp::resolver m_resolver;
@@ -52,6 +53,7 @@ private:
     std::string m_host;
     std::string m_port;
     std::string m_user;
+    std::string m_pool_pub_key; // Added member to store the pool's public key
 
     uint32_t m_session_id; // V2 uses a session ID
     JobCallback m_job_callback;

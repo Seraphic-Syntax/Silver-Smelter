@@ -7,31 +7,27 @@
 int main(int argc, char* argv[]) {
     Log::info("Silver-Smelter Bitcoin Miner starting...");
 
-    // --- Pool Configuration ---
-    const std::string host = "v2.us-east.stratum.braiins.com";
-    const std::string port = "3334";
-    const std::string user = "Seraphic-Syntax.Silver-Smelter";
-    const std::string pool_public_key_str = "u95GEReVMjK6k5YqiSFNqqTnKU4ypU2Wm8awa6tmbmDmk1bWt";
+    // --- Configuration from your Stratum V2 URI ---
+    const std::string host = "v2.us-east.stratum.braiins.com";      // <-- From the URI
+    const std::string port = "3334";                                // Standard port for stratum2+tcp
+    const std::string user = "Seraphic-Syntax.worker1";             // Your Braiins Pool username
+    const std::string pool_public_key_str = "u95GEReVMjK6k5YqiSFNqqTnKU4ypU2Wm8awa6tmbmDmk1bWt"; // <-- From the URI
+    // ---------------------------------------------------
 
     Log::info("Pool: " + host + ":" + port);
     Log::info("User: " + user);
 
-    boost::asio::io_context ioc;
-
     // --- Setup Asynchronous I/O ---
-    // The io_context is the heart of Boost.Asio. All async operations run on it.
     boost::asio::io_context ioc;
 
     // --- Create Miner Components ---
-    // Create a StratumClient, passing it the io_context.
-    auto client = std::make_unique<StratumClient>(ioc, host, port, user);
+    // Create a StratumClient, now passing all 5 arguments including the public key.
+    auto client = std::make_unique<StratumClient>(ioc, host, port, user, pool_public_key_str);
 
     // Create the Miner, giving it ownership of the client.
     Miner miner(std::move(client));
 
     // --- Start Threads ---
-    // The network operations need their own thread to run on.
-    // The ioc.run() call will block this thread and process async events.
     std::thread network_thread([&ioc]() {
         try {
             ioc.run();

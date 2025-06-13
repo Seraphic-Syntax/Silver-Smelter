@@ -1,4 +1,3 @@
-// Replace content of: src/net/stratum.cpp
 #include "silver_smelter/net/stratum.hpp"
 #include "silver_smelter/util/log.hpp"
 #include <iostream>
@@ -6,13 +5,15 @@
 namespace asio = boost::asio;
 using asio::ip::tcp;
 
-StratumClient::StratumClient(asio::io_context& ioc, const std::string& host, const std::string& port, const std::string& user)
+// The constructor is updated to accept the pool's public key string.
+StratumClient::StratumClient(asio::io_context& ioc, const std::string& host, const std::string& port, const std::string& user, const std::string& pool_pub_key)
     : m_ioc(ioc),
       m_socket(ioc),
       m_resolver(ioc),
       m_host(host),
       m_port(port),
       m_user(user),
+      m_pool_pub_key(pool_pub_key), // Store the key
       m_session_id(0),
       m_header_buffer(sizeof(MessageHeader)) // Allocate buffer for one header
 {}
@@ -36,15 +37,18 @@ void StratumClient::connect() {
                 return;
             }
             Log::success("Connection established to " + endpoint.address().to_string() + "!");
-            send_subscribe();
-            do_read_header(); // Start the read loop
+            send_subscribe(); // Send the first message after connecting
+            do_read_header(); // Start the main read loop
         });
     });
 }
 
 void StratumClient::send_subscribe() {
     Subscribe sub_msg{};
-    // V2 requires a 32-byte public key. For unencrypted, this is all zeros.
+    
+    // For an unencrypted stratum2+tcp connection, the protocol specifies
+    // that the public key field MUST be filled with 32 zero bytes.
+    // A real encrypted client would decode the m_pool_pub_key string here.
     memset(sub_msg.pool_public_key, 0, sizeof(sub_msg.pool_public_key));
     
     // Copy user agent and identity, ensuring null padding.
@@ -72,11 +76,21 @@ void StratumClient::do_read_header() {
 
 void StratumClient::on_read_header(const boost::system::error_code& ec, std::size_t /*bytes*/) {
     if (ec) {
-        Log::error("Read header failed: " + ec.message());
+        if (ec != asio::error::eof) {
+            Log::error("Read header failed: " + ec.message());
+        }
         stop();
         return;
     }
+
     const MessageHeader* header = reinterpret_cast<const MessageHeader*>(m_header_buffer.data());
+    
+    if (header->protocol != 0x02) {
+        Log::error("Received message with invalid protocol version. Expected 0x02.");
+        stop();
+        return;
+    }
+
     if (header->msg_len > 0) {
         do_read_body(header->msg_len);
     } else {
@@ -138,12 +152,19 @@ void StratumClient::handle_new_mining_job(const std::vector<char>& body) {
     job.header.nonce = 0; // We will iterate this
     memcpy(job.header.prev_block_hash.data(), msg->prev_block_hash, 32);
 
+    // ============================ CRITICAL TODO ============================
     // The MOST COMPLEX part of a real miner is building the true merkle root
-    // from coinbase prefix/suffix and the merkle branch.
-    // FOR NOW, we will use a placeholder merkle root.
-    // TODO: Implement real coinbase and merkle root construction.
+    // from coinbase prefix/suffix and the merkle branch hashes which follow this message.
+    // FOR NOW, we will use a placeholder merkle root. Any shares found will be invalid.
+    //
+    // To make this a real miner, you must:
+    // 1. Read the Merkle branch hashes from the rest of the 'body' vector.
+    // 2. Construct the coinbase transaction.
+    // 3. Hash the coinbase tx to get the first leaf.
+    // 4. Combine your leaf with the Merkle branches to calculate the true Merkle Root.
+    // ======================================================================
     memset(job.header.merkle_root.data(), 0, 32); // Placeholder
-    job.header.timestamp = time(0); // Placeholder
+    job.header.timestamp = time(0); // Placeholder; a real miner uses the pool's ntime
 
     job.target = calculate_target_from_bits(job.header.bits);
 
@@ -155,7 +176,9 @@ void StratumClient::handle_new_mining_job(const std::vector<char>& body) {
 
 void StratumClient::do_write(const void* data, size_t size) {
     asio::async_write(m_socket, asio::buffer(data, size),
-        [](const boost::system::error_code&, std::size_t){});
+        [](const boost::system::error_code& /*ec*/, std::size_t /*bytes_transferred*/){
+            // Can add logging here if write fails
+        });
 }
 
 void StratumClient::submit_share(uint32_t job_id, uint32_t nonce) {
