@@ -1,10 +1,6 @@
 Silver-Smelter 
 
 <p align="center">
-  <img src="https://stash/0ydjy5jvqr4" alt="Seraphic-Syntax Logo" width="200"/>
-</p>
-
-<p align="center">
   <em>A high-performance, cross-platform Bitcoin mining client built from scratch in modern C++.</em>
 </p>
 
