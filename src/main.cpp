@@ -8,12 +8,15 @@ int main(int argc, char* argv[]) {
     Log::info("Silver-Smelter Bitcoin Miner starting...");
 
     // --- Pool Configuration ---
-    const std::string host = "v2.us-east.stratum.braiins.com"
+    const std::string host = "v2.us-east.stratum.braiins.com";
     const std::string port = "3334";
     const std::string user = "Seraphic-Syntax.Silver-Smelter";
     const std::string pool_public_key_str = "u95GEReVMjK6k5YqiSFNqqTnKU4ypU2Wm8awa6tmbmDmk1bWt";
+
     Log::info("Pool: " + host + ":" + port);
     Log::info("User: " + user);
+
+    boost::asio::io_context ioc;
 
     // --- Setup Asynchronous I/O ---
     // The io_context is the heart of Boost.Asio. All async operations run on it.
