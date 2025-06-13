@@ -12,9 +12,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Add the 'include' directory to the include path
 include_directories(include)
 
-# Find necessary libraries (pthreads for threading, OpenSSL for crypto)
+# Find necessary libraries
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
+# -- ADD THIS --
+find_package(Boost REQUIRED COMPONENTS system thread)
 
 # Define the executable target and its source files
 add_executable(silver_smelter
@@ -31,6 +33,9 @@ target_link_libraries(silver_smelter PRIVATE
     Threads::Threads
     OpenSSL::SSL
     OpenSSL::Crypto
+    # -- AND ADD THIS --
+    Boost::system
+    Boost::thread
 )
 
 # --- For a nice development experience ---
