@@ -1,7 +1,7 @@
 Silver-Smelter 
 
 <p align="center">
-  <img src="https://i.imgur.com/gKcg4E8.png" alt="Silver-Smelter Logo" width="200"/>
+  <img src="https://www.deviantart.com/stash/0ydjy5jvqr4" alt="Silver-Smelter Logo" width="200"/>
 </p>
 
 <p align="center">
