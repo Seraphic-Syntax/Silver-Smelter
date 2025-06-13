@@ -163,6 +163,7 @@ void StratumClient::handle_new_mining_job(const std::vector<char>& body) {
     // 3. Hash the coinbase tx to get the first leaf.
     // 4. Combine your leaf with the Merkle branches to calculate the true Merkle Root.
     // ======================================================================
+    
     memset(job.header.merkle_root.data(), 0, 32); // Placeholder
     job.header.timestamp = time(0); // Placeholder; a real miner uses the pool's ntime
 
